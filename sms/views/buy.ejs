@@ -1,0 +1,97 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head', { title: 'Buy a number' }) %></head>
+<body>
+<div class="app-shell">
+  <%- include('partials/nav', { active: 'buy' }) %>
+  <div class="main">
+    <div class="page-head">
+      <h1>Buy a verification number</h1>
+      <p>Pick a country and a service. We'll show you the price before you confirm.</p>
+    </div>
+
+    <% if (typeof error !== 'undefined' && error) { %><div class="error-box"><%= error %></div><% } %>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <form method="POST" action="/buy" id="buy-form">
+          <div class="field">
+            <label for="country">Country</label>
+            <select name="country" id="country" required>
+              <option value="">Select a country…</option>
+              <% countries.forEach(c => { %>
+                <option value="<%= c.id %>"><%= c.eng %></option>
+              <% }) %>
+            </select>
+          </div>
+          <div class="field">
+            <label for="service">Service</label>
+            <select name="service" id="service" required disabled>
+              <option value="">Select a country first…</option>
+            </select>
+          </div>
+          <input type="hidden" name="serviceName" id="serviceName" />
+          <input type="hidden" name="countryName" id="countryName" />
+          <button class="btn btn-block" type="submit" id="submit-btn" disabled>Buy this number</button>
+        </form>
+      </div>
+
+      <div class="card price-preview">
+        <h2 style="font-size:1rem;">Price preview</h2>
+        <div class="row"><span>Service</span><span id="pv-service">—</span></div>
+        <div class="row"><span>Country</span><span id="pv-country">—</span></div>
+        <div class="row"><span>Numbers available</span><span id="pv-available">—</span></div>
+        <div class="row total"><span>You pay</span><span id="pv-price">—</span></div>
+        <p class="helper-text" style="margin-top:10px;">Your wallet balance: <%= formatMoney(user.balance_cents) %></p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const countrySel = document.getElementById('country');
+  const serviceSel = document.getElementById('service');
+  const submitBtn = document.getElementById('submit-btn');
+  const pvService = document.getElementById('pv-service');
+  const pvCountry = document.getElementById('pv-country');
+  const pvAvailable = document.getElementById('pv-available');
+  const pvPrice = document.getElementById('pv-price');
+  const serviceNameInput = document.getElementById('serviceName');
+  const countryNameInput = document.getElementById('countryName');
+
+  countrySel.addEventListener('change', async () => {
+    const countryId = countrySel.value;
+    pvCountry.textContent = countrySel.options[countrySel.selectedIndex].text || '—';
+    countryNameInput.value = countrySel.options[countrySel.selectedIndex].text || '';
+    serviceSel.innerHTML = '<option value="">Loading…</option>';
+    serviceSel.disabled = true;
+    submitBtn.disabled = true;
+    if (!countryId) return;
+
+    const res = await fetch('/api/services?country=' + encodeURIComponent(countryId));
+    const data = await res.json();
+    serviceSel.innerHTML = '<option value="">Select a service…</option>' +
+      data.services.map(s => `<option value="${s.code}" data-name="${s.name}">${s.name}</option>`).join('');
+    serviceSel.disabled = false;
+  });
+
+  serviceSel.addEventListener('change', async () => {
+    const countryId = countrySel.value;
+    const serviceCode = serviceSel.value;
+    const opt = serviceSel.options[serviceSel.selectedIndex];
+    pvService.textContent = opt ? opt.text : '—';
+    serviceNameInput.value = opt ? opt.text : '';
+    submitBtn.disabled = true;
+    pvPrice.textContent = '—';
+    pvAvailable.textContent = '—';
+    if (!serviceCode) return;
+
+    const res = await fetch(`/api/price?service=${encodeURIComponent(serviceCode)}&country=${encodeURIComponent(countryId)}`);
+    const data = await res.json();
+    pvPrice.textContent = data.price;
+    pvAvailable.textContent = data.available;
+    submitBtn.disabled = false;
+  });
+</script>
+</body>
+</html>

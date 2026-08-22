@@ -1,0 +1,76 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head', { title: 'Admin' }) %></head>
+<body>
+<div class="app-shell">
+  <%- include('partials/nav', { active: 'admin' }) %>
+  <div class="main">
+    <div class="page-head">
+      <h1>Admin</h1>
+      <p>Store settings, users, and recent orders.</p>
+    </div>
+
+    <div class="grid grid-3" style="margin-bottom:24px;">
+      <div class="card stat-card">
+        <div class="stat-label">HeroSMS balance</div>
+        <div class="stat-value"><%= heroBalance !== null ? ('$' + Number(heroBalance).toFixed(2)) : '—' %></div>
+        <% if (mock) { %><p class="helper-text">Mock mode</p><% } %>
+      </div>
+      <div class="card stat-card">
+        <div class="stat-label">Users</div>
+        <div class="stat-value"><%= users.length %></div>
+      </div>
+      <div class="card">
+        <h2 style="font-size:0.95rem;">Markup</h2>
+        <form method="POST" action="/admin/markup" style="display:flex; gap:8px; margin-top:8px;">
+          <input type="number" name="markup_percent" value="<%= markupPercent %>" min="0" step="1" />
+          <button class="btn" type="submit">Save</button>
+        </form>
+        <p class="helper-text" style="margin-top:6px;">% added on top of HeroSMS's raw cost.</p>
+      </div>
+    </div>
+
+    <div class="card" style="margin-bottom:24px;">
+      <h2 style="margin-bottom:14px;">Users</h2>
+      <table>
+        <thead><tr><th>Email</th><th>Balance</th><th>Joined</th><th>Credit balance</th></tr></thead>
+        <tbody>
+        <% users.forEach(u => { %>
+          <tr>
+            <td><%= u.email %><%= u.is_admin ? ' (admin)' : '' %></td>
+            <td class="mono"><%= formatMoney(u.balance_cents) %></td>
+            <td class="helper-text"><%= u.created_at %></td>
+            <td>
+              <form method="POST" action="/admin/credit" style="display:flex; gap:6px;">
+                <input type="hidden" name="userId" value="<%= u.id %>" />
+                <input type="number" name="amount" min="0.01" step="0.01" placeholder="10.00" style="width:100px;" />
+                <button class="btn btn-ghost" type="submit">Credit</button>
+              </form>
+            </td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:14px;">Recent orders (all users)</h2>
+      <table>
+        <thead><tr><th>User</th><th>Service</th><th>Country</th><th>Cost</th><th>Status</th></tr></thead>
+        <tbody>
+        <% orders.forEach(o => { %>
+          <tr>
+            <td><%= o.email %></td>
+            <td><%= o.service_name %></td>
+            <td><%= o.country_name %></td>
+            <td class="mono"><%= formatMoney(o.cost_cents) %></td>
+            <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+          </tr>
+        <% }) %>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</div>
+</body>
+</html>

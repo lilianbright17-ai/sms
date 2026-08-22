@@ -1,0 +1,36 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head', { title: 'Orders' }) %></head>
+<body>
+<div class="app-shell">
+  <%- include('partials/nav', { active: 'orders' }) %>
+  <div class="main">
+    <div class="page-head">
+      <h1>Orders</h1>
+      <p>Every number you've purchased.</p>
+    </div>
+    <div class="card">
+      <% if (orders.length === 0) { %>
+        <p class="helper-text">No orders yet. <a href="/buy">Buy your first number</a>.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Service</th><th>Country</th><th>Number</th><th>Cost</th><th>Status</th><th></th></tr></thead>
+          <tbody>
+          <% orders.forEach(o => { %>
+            <tr>
+              <td><%= o.service_name %></td>
+              <td><%= o.country_name %></td>
+              <td class="mono"><%= o.phone_number %></td>
+              <td><%= formatMoney(o.cost_cents) %></td>
+              <td><span class="badge badge-<%= o.status %>"><%= o.status %></span></td>
+              <td><a href="/orders/<%= o.id %>">View →</a></td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+</body>
+</html>

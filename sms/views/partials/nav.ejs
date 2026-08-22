@@ -1,0 +1,21 @@
+<div class="sidebar">
+  <div class="brand"><span class="dot"></span> SignalDesk</div>
+  <nav class="nav-links">
+    <a href="/dashboard" class="<%= active === 'dashboard' ? 'active' : '' %>">Dashboard</a>
+    <a href="/buy" class="<%= active === 'buy' ? 'active' : '' %>">Buy a number</a>
+    <a href="/orders" class="<%= active === 'orders' ? 'active' : '' %>">Orders</a>
+    <a href="/wallet" class="<%= active === 'wallet' ? 'active' : '' %>">Wallet</a>
+    <% if (session.isAdmin) { %>
+      <a href="/admin" class="<%= active === 'admin' ? 'active' : '' %>">Admin</a>
+    <% } %>
+  </nav>
+  <div class="sidebar-footer">
+    <div class="balance-chip">
+      <div class="label">Balance</div>
+      <div class="amount"><%= formatMoney(user.balance_cents) %></div>
+    </div>
+    <form method="POST" action="/logout" style="margin-top:10px;">
+      <button class="btn btn-ghost btn-block" type="submit">Log out</button>
+    </form>
+  </div>
+</div>

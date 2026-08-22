@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head', { title: 'Wallet' }) %></head>
+<body>
+<div class="app-shell">
+  <%- include('partials/nav', { active: 'wallet' }) %>
+  <div class="main">
+    <div class="page-head">
+      <h1>Wallet</h1>
+      <p>Your balance and transaction history.</p>
+    </div>
+
+    <div class="grid grid-2" style="margin-bottom:24px;">
+      <div class="card stat-card">
+        <div class="stat-label">Current balance</div>
+        <div class="stat-value"><%= formatMoney(user.balance_cents) %></div>
+      </div>
+      <div class="card">
+        <h2 style="font-size:1rem;">Add funds (demo)</h2>
+        <p class="helper-text" style="margin-bottom:12px;">This instantly credits your account with no real charge — swap in a real payment processor before launch.</p>
+        <form method="POST" action="/wallet/demo-topup" style="display:flex; gap:10px;">
+          <input type="number" name="amount" min="1" max="1000" step="0.01" placeholder="20.00" required />
+          <button class="btn" type="submit">Add</button>
+        </form>
+      </div>
+    </div>
+
+    <div class="card">
+      <h2 style="margin-bottom:14px;">Transaction history</h2>
+      <% if (txs.length === 0) { %>
+        <p class="helper-text">No transactions yet.</p>
+      <% } else { %>
+        <table>
+          <thead><tr><th>Date</th><th>Reason</th><th>Amount</th></tr></thead>
+          <tbody>
+          <% txs.forEach(t => { %>
+            <tr>
+              <td class="helper-text"><%= t.created_at %></td>
+              <td><%= t.reason %></td>
+              <td class="mono" style="color: <%= t.amount_cents >= 0 ? 'var(--signal)' : 'var(--danger)' %>">
+                <%= t.amount_cents >= 0 ? '+' : '' %><%= formatMoney(t.amount_cents) %>
+              </td>
+            </tr>
+          <% }) %>
+          </tbody>
+        </table>
+      <% } %>
+    </div>
+  </div>
+</div>
+</body>
+</html>

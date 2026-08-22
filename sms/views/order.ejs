@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html lang="en">
+<head><%- include('partials/head', { title: 'Order #' + order.id }) %></head>
+<body>
+<div class="app-shell">
+  <%- include('partials/nav', { active: 'orders' }) %>
+  <div class="main">
+    <div class="page-head">
+      <h1>Order #<%= order.id %></h1>
+      <p><%= order.service_name %> · <%= order.country_name %></p>
+    </div>
+
+    <div class="grid grid-2">
+      <div class="card">
+        <div class="field">
+          <label>Phone number</label>
+          <div class="phone-display mono"><%= order.phone_number %></div>
+        </div>
+        <div class="field">
+          <label>Cost</label>
+          <div class="mono"><%= formatMoney(order.cost_cents) %></div>
+        </div>
+        <div class="field">
+          <label>Status</label>
+          <span class="badge badge-<%= order.status %>" id="status-badge"><%= order.status %></span>
+        </div>
+
+        <% if (order.status !== 'completed' && order.status !== 'canceled') { %>
+          <form method="POST" action="/orders/<%= order.id %>/cancel" style="margin-top:16px;">
+            <button class="btn btn-danger" type="submit">Cancel &amp; refund</button>
+          </form>
+        <% } %>
+      </div>
+
+      <div class="card">
+        <h2 style="font-size:1rem;">Incoming SMS</h2>
+        <div class="signal-panel" id="signal-panel">
+          <% if (order.otp_code) { %>
+            <div class="otp-display mono" id="otp-code"><%= order.otp_code %></div>
+            <p class="helper-text" id="otp-text"><%= order.otp_text %></p>
+          <% } else { %>
+            <p class="scanning" id="scanning-text">Listening for an incoming code…</p>
+            <div class="scan-bar"><span></span></div>
+          <% } %>
+        </div>
+        <% if (order.status === 'received') { %>
+          <form method="POST" action="/orders/<%= order.id %>/finish">
+            <button class="btn btn-block" type="submit">Mark as used / complete</button>
+          </form>
+        <% } %>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  const orderId = <%= order.id %>;
+  const terminalStatuses = ['completed', 'canceled'];
+  let currentStatus = "<%= order.status %>";
+
+  async function poll() {
+    if (terminalStatuses.includes(currentStatus)) return;
+    try {
+      const res = await fetch(`/orders/${orderId}/status`);
+      const data = await res.json();
+      currentStatus = data.status;
+      document.getElementById('status-badge').textContent = data.status;
+      document.getElementById('status-badge').className = 'badge badge-' + data.status;
+
+      if (data.code) {
+        document.getElementById('signal-panel').innerHTML = `
+          <div class="otp-display mono">${data.code}</div>
+          <p class="helper-text">${data.text || ''}</p>
+        `;
+        if (!terminalStatuses.includes(data.status)) location.reload();
+        return;
+      }
+    } catch (e) { /* keep polling */ }
+    setTimeout(poll, 3000);
+  }
+  poll();
+</script>
+</body>
+</html>
