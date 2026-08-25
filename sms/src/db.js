@@ -41,7 +41,7 @@ const adminPass = process.env.ADMIN_PASSWORD || 'Admin@123';
 const existing = db.prepare('SELECT id FROM users WHERE email = ?').get(adminEmail);
 if (!existing) {
   const hash = bcrypt.hashSync(adminPass, 10);
-  db.prepare("INSERT INTO users (email, password, is_admin) VALUES (?, ?, 1)").run(adminEmail, hash);
+  db.prepare("INSERT INTO users (email, password_hash, is_admin) VALUES (?, ?, 1)").run(adminEmail, hash);
   console.log(`Admin created: ${adminEmail}`);
 }
 
