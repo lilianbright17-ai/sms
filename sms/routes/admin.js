@@ -16,6 +16,7 @@ router.get('/admin', async (req, res) => {
     )
     .all();
   const markupRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('markup_percent');
+  const rateRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('exchange_rate_ngn');
   let heroBalance = null;
   try {
     heroBalance = (await heroSms.getBalance()).balance;
@@ -28,6 +29,7 @@ router.get('/admin', async (req, res) => {
     orders,
     formatMoney,
     markupPercent: markupRow.value,
+    exchangeRate: rateRow.value,
     heroBalance,
     mock: heroSms.isMock(),
   });
@@ -37,6 +39,14 @@ router.post('/admin/markup', (req, res) => {
   const percent = Number(req.body.markup_percent);
   if (Number.isFinite(percent) && percent >= 0) {
     db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(String(percent), 'markup_percent');
+  }
+  res.redirect('/admin');
+});
+
+router.post('/admin/exchange-rate', (req, res) => {
+  const rate = Number(req.body.exchange_rate_ngn);
+  if (Number.isFinite(rate) && rate > 0) {
+    db.prepare('UPDATE settings SET value = ? WHERE key = ?').run(String(rate), 'exchange_rate_ngn');
   }
   res.redirect('/admin');
 });

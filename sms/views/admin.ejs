@@ -30,6 +30,17 @@
       </div>
     </div>
 
+    <div class="grid grid-3" style="margin-bottom:24px;">
+      <div class="card">
+        <h2 style="font-size:0.95rem;">Exchange rate</h2>
+        <form method="POST" action="/admin/exchange-rate" style="display:flex; gap:8px; margin-top:8px;">
+          <input type="number" name="exchange_rate_ngn" value="<%= exchangeRate %>" min="1" step="0.01" />
+          <button class="btn" type="submit">Save</button>
+        </form>
+        <p class="helper-text" style="margin-top:6px;">₦ per $1. Used to convert HeroSMS's USD cost into Naira before markup.</p>
+      </div>
+    </div>
+
     <div class="card" style="margin-bottom:24px;">
       <h2 style="margin-bottom:14px;">Users</h2>
       <table>
@@ -43,7 +54,7 @@
             <td>
               <form method="POST" action="/admin/credit" style="display:flex; gap:6px;">
                 <input type="hidden" name="userId" value="<%= u.id %>" />
-                <input type="number" name="amount" min="0.01" step="0.01" placeholder="10.00" style="width:100px;" />
+                <input type="number" name="amount" min="0.01" step="0.01" placeholder="1000.00" style="width:100px;" />
                 <button class="btn btn-ghost" type="submit">Credit</button>
               </form>
             </td>

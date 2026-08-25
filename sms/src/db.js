@@ -1,10 +1,14 @@
+const fs = require('fs');
 const path = require('path');
 const Database = require('better-sqlite3');
 
-const db = new Database(path.join(__dirname, '..', 'data', 'app.db'));
-db.pragma('journal_mode = WAL');
+const dataDir = path.join(__dirname, '..', '..', 'data');
+if (!fs.existsSync(dataDir)) {
+  fs.mkdirSync(dataDir, { recursive: true });
+}
 
-db.exec(`
+const db = new Database(path.join(__dirname, '..', '..', 'data', 'app.db'));
+db.pragma('journal_mode = WAL');
 CREATE TABLE IF NOT EXISTS users (
   id INTEGER PRIMARY KEY AUTOINCREMENT,
   email TEXT UNIQUE NOT NULL,
@@ -50,6 +54,13 @@ const markupRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('ma
 if (!markupRow) {
   db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
     .run('markup_percent', String(process.env.DEFAULT_MARKUP_PERCENT || 50));
+}
+
+// Seed default USD -> NGN exchange rate if missing. Adjust anytime from /admin.
+const rateRow = db.prepare('SELECT value FROM settings WHERE key = ?').get('exchange_rate_ngn');
+if (!rateRow) {
+  db.prepare('INSERT INTO settings (key, value) VALUES (?, ?)')
+    .run('exchange_rate_ngn', String(process.env.DEFAULT_EXCHANGE_RATE_NGN || 1500));
 }
 
 module.exports = db;

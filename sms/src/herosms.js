@@ -70,13 +70,27 @@ async function getCountries() {
 async function getServicesList(countryId) {
   if (isMock()) return MOCK_SERVICES;
   const raw = await callLegacy('getServicesList', { country: countryId });
-  return (raw.services || []).map((s) => ({ code: s.code, name: s.name }));
+
+  let list = [];
+  if (Array.isArray(raw)) {
+    list = raw;
+  } else if (raw && Array.isArray(raw.services)) {
+    list = raw.services;
+  } else if (raw && typeof raw === 'object') {
+    list = Object.entries(raw)
+      .filter(([key]) => !['success', 'status'].includes(key))
+      .map(([code, value]) => ({
+        code,
+        name: typeof value === 'string' ? value : (value.name || value.eng || code),
+      }));
+  }
+
+  return list.map((s) => ({ code: s.code, name: s.name || s.eng || s.code }));
 }
 
 // Returns raw cost (in HeroSMS's currency, before your markup) per country/service.
 async function getPrices(serviceCode, countryId) {
   if (isMock()) {
-    // Deterministic-ish fake price so the UI looks alive.
     const base = 0.15 + ((serviceCode.charCodeAt(0) + Number(countryId || 0)) % 20) / 100;
     return { cost: Number(base.toFixed(2)), count: 50 + (Number(countryId || 0) * 7) % 500 };
   }
@@ -98,6 +112,7 @@ async function getNumber(serviceCode, countryId) {
     };
   }
   const raw = await callLegacy('getNumberV2', { service: serviceCode, country: countryId });
+  if (typeof raw === 'string') throw new HeroSmsError(raw, raw);
   if (raw && raw.error) throw new HeroSmsError(raw.error, raw.message);
   return raw;
 }

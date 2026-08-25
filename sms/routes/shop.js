@@ -1,7 +1,7 @@
 const express = require('express');
 const db = require('../src/db');
 const heroSms = require('../src/herosms');
-const { formatMoney, getMarkupPercent, applyMarkup, requireAuth } = require('../src/helpers');
+const { formatMoney, getMarkupPercent, getExchangeRate, applyMarkup, requireAuth } = require('../src/helpers');
 
 const router = express.Router();
 router.use(requireAuth);
@@ -31,13 +31,14 @@ router.get('/api/services', async (req, res) => {
   res.json({ services });
 });
 
-// JSON: your price (with markup already applied) for a service+country
+// JSON: your price (with markup and exchange rate already applied) for a service+country
 router.get('/api/price', async (req, res) => {
   const { service, country } = req.query;
   if (!service || country === undefined) return res.status(400).json({ error: 'Missing params' });
   const raw = await heroSms.getPrices(service, country);
   const markup = getMarkupPercent(db);
-  const priceCents = applyMarkup(raw.cost, markup);
+  const rate = getExchangeRate(db);
+  const priceCents = applyMarkup(raw.cost, markup, rate);
   res.json({ priceCents, price: formatMoney(priceCents), available: raw.count });
 });
 
@@ -50,7 +51,8 @@ router.post('/buy', async (req, res) => {
 
   const raw = await heroSms.getPrices(service, country);
   const markup = getMarkupPercent(db);
-  const priceCents = applyMarkup(raw.cost, markup);
+  const rate = getExchangeRate(db);
+  const priceCents = applyMarkup(raw.cost, markup, rate);
 
   if (user.balance_cents < priceCents) {
     const countries = await heroSms.getCountries();
